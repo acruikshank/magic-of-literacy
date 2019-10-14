@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name = "viewport" content = "width = device-width, user-scalable = no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+    }
+
+    canvas {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+   .disconnected button {
+      opacity: .25;
+    }
+
+    #status {
+      display: none;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 6vw;
+      color: white;
+      position: absolute;
+      bottom: 10vw;
+      width: 100%;
+      text-align: center;
+    }
+    .disconnected #status {
+      display: block;
+    }
+
+  </style>
+</head>
+<body class="disconnected">
+  <canvas id="viz"></canvas>
+
+  <div id="status">disconnected</div>
+</body>
+<script>
+let wsOpen = false;
+let ws;
+
+
+let canvas = viz
+let cw = canvas.width = canvas.offsetWidth*2
+let ch = canvas.height = canvas.offsetHeight*2
+
+const vscale = ch/15/2;
+
+let ctx = canvas.getContext('2d')
+
+function circle(x, y, r) {
+  ctx.beginPath()
+  ctx.arc(x, y, r, 0, 2*Math.PI, true)
+  ctx.fill()
+}
+function line(x1, y1, x2, y2) {
+  ctx.beginPath()
+  ctx.moveTo(x1,y1)
+  ctx.lineTo(x2,y2)
+  ctx.stroke()
+}
+
+function render(data) {
+  ctx.fillStyle = 'rgba(0,0,0,.9)'
+  ctx.fillRect(0, 0, cw, ch)
+
+  ctx.save()
+
+  ctx.fillStyle = '#fff'
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = .01
+
+  ctx.translate(cw/2, ch/2)
+  ctx.scale(vscale, -vscale)
+  line(0,100,0,-100)
+  line(-100,0,100,0)
+  Array(201).fill().forEach((x,i) => line(-.25, i-100, .25, i-100))
+  Array(201).fill().forEach((x,i) => line(i-100, -.25, i-100, .25))
+
+  circle(data[2],data[1], 1)
+
+  ctx.strokeStyle = '#7cfc00';
+  ctx.lineWidth = .06;
+  let theta = 2*Math.PI*data[3]/255 + Math.PI, amplitude = 20*data[4]/255;
+  line(0,0, amplitude*Math.sin(theta), amplitude*Math.cos(theta))
+
+  ctx.strokeStyle = '#fcc800';
+  theta = Math.atan2(data[2], data[1])
+  amplitude = Math.sqrt(data[2]*data[2] + data[1]*data[1]);
+  line(0,0, amplitude*Math.sin(theta), amplitude*Math.cos(theta))
+
+  ctx.restore()
+}
+
+function openWS() {
+  ws = new WebSocket('ws://1.2.3.4/ws')
+  ws.onopen = ()=>{
+    wsOpen = true;
+    document.body.classList.remove('disconnected')
+  }
+  ws.onclose = ()=>{
+    wsOpen = false;
+    document.body.classList.add('disconnected')
+  }
+  ws.onmessage = (e)=>{
+    e.data.arrayBuffer().then((ab) => render(new Float32Array(ab)))
+  }
+}
+openWS();
+setInterval(() => { if (!wsOpen) openWS() }, 2000);
+
+</script>
+</html>

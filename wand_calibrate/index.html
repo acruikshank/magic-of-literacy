@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name = "viewport" content = "width = device-width, user-scalable = no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+    }
+
+    button, div.s {
+      position: absolute;
+      top: 0;
+      width: 12.5%;
+      height: 100%;
+      padding: 0;
+      box-sizing: border-box;
+      margin: 0;
+      border: solid .5vw #000;
+      margin: 0;
+    }
+
+    .disconnected button {
+      opacity: .25;
+    }
+
+    .c0 {
+      background-color: rgb(255, 29, 78);
+      left: 0%;
+    }
+    .d0 {
+      background-color: rgb(255, 150, 29);
+      left: 12.5%;
+    }
+    .e0 {
+      background-color: rgb(251, 255, 29);
+      left: 25%;
+    }
+    .f0 {
+      background-color: rgb(26, 240, 37);
+      left: 37.5%;
+    }
+    .g0 {
+      background-color: rgb(42, 138, 248);
+      left: 50%;
+    }
+    .a0 {
+      background-color: rgb(22, 55, 243);
+      left: 62.5%;
+    }
+    .b0 {
+      background-color: rgb(191, 29, 255);
+      left: 75%;
+    }
+    .c1 {
+      background-color: rgb(255, 29, 78);
+      left: 87.5%;
+    }
+
+    div.s {
+      background-color: #000;
+      width: 8%;
+      height: 55%;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .c.s {
+      left: 8.5%;
+    }
+    .d.s {
+      left: 21%;
+    }
+    .f.s {
+      left: 46%;
+    }
+    .g.s {
+      left: 58.5%;
+    }
+    .a.s {
+      left: 71%;
+    }
+
+    #status {
+      display: none;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 6vw;
+      color: white;
+      position: absolute;
+      bottom: 10vw;
+      width: 100%;
+      text-align: center;
+    }
+    .disconnected #status {
+      display: block;
+    }
+
+  </style>
+</head>
+<body class="disconnected">
+  <button class="c0"></button>
+  <button class="d0"></button>
+  <button class="e0"></button>
+  <button class="f0"></button>
+  <button class="g0"></button>
+  <button class="a0"></button>
+  <button class="b0"></button>
+  <button class="c1"></button>
+
+  <div class="c s"></div>
+  <div class="d s"></div>
+  <div class="f s"></div>
+  <div class="g s"></div>
+  <div class="a s"></div>
+
+  <div id="status">disconnected</div>
+</body>
+<script>
+let wsOpen = false;
+let ws;
+
+function openWS() {
+  ws = new WebSocket('ws://1.2.3.4/ws')
+  ws.onopen = ()=>{
+    wsOpen = true;
+    document.body.classList.remove('disconnected')
+  }
+  ws.onclose = ()=>{
+    wsOpen = false;
+    document.body.classList.add('disconnected')
+  }
+}
+openWS();
+setInterval(() => { if (!wsOpen) openWS() }, 2000);
+
+ws.binaryType = "arraybuffer";
+let buffer = new ArrayBuffer(1);
+let bufferView = new DataView(buffer);
+
+const notes = {c0:0, d0:1, e0: 2, f0: 3, g0: 4, a0: 5, b0: 6, c1: 7}
+
+document.body.addEventListener('touchstart', (e) => {
+  e.preventDefault()
+  for (let i=0; i<e.touches.length; i++) {
+    let touch = e.touches[i]
+    let note = notes[touch.target.className]
+    if (note !== undefined && wsOpen) {
+      bufferView.setInt8(0, note)
+      ws.send(buffer)
+    }
+  }
+})
+
+
+</script>
+</html>

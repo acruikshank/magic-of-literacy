@@ -1,0 +1,57 @@
+<html>
+<head><style>
+  body, html, canvas {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background-color: black;
+  }
+</style></head>
+<body>
+  <canvas id="c"></canvas>
+<script>
+let canvas = c;
+let cw = canvas.width = canvas.offsetWidth;
+let ch = canvas.height = canvas.offsetHeight;
+let ctx = canvas.getContext('2d')
+
+function graph(x, y) {
+  return {
+    x: cw/2 + cw * x / 16,
+    y: ch/2 - ch * y / 2,
+  }
+}
+
+let t0 = new Date().getTime() / 1000
+function dampedSin(x, t, d) {
+  effX = x + 3*(t - t0) - d;
+  return effX > 0 ? -1.3*Math.exp(-.4*effX)*Math.sin(2*effX) : 0;
+}
+
+function render() {
+  ctx.beginPath();
+  ctx.fillStyle = '#000'
+  ctx.rect(0,0,cw,ch)
+  ctx.fill()
+  ctx.strokeStyle = '#fff';
+
+  const start = -8;
+  const end = 8;
+  for (let x = -8; x<8; x+= .01) {
+    let graphPoint = graph(x, dampedSin(x, new Date().getTime() / 1000, 5));
+    ctx[x==start?'moveTo':'lineTo'](graphPoint.x, graphPoint.y);
+  }
+  ctx.stroke();
+
+  ctx.beginPath()
+  ctx.moveTo(cw/2,0)
+  ctx.lineTo(cw/2,ch)
+  ctx.stroke()
+
+  requestAnimationFrame(render);
+}
+
+render();
+</script>
+</body>
+</html>
