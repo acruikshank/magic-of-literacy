@@ -25,15 +25,6 @@ int channel = 0;
 
 int state = STATE_INIT_CHANNEL;
 
-/* TODO:
-  Shift states from collecting to cocked to triggered.
-  Initiate streaks based on angular motion.
-  "collect" streaks after delay into light
-  choose number of streaks s.t. on expectation num streaks = C* (angle delta) * (total angle) / (collection angle)
-
-*/
-
-
 WiFiUDP Udp;
 uint32_t myMac = 0;
 
@@ -94,19 +85,41 @@ void switchToReady() {
   state = STATE_READY;
   colorCycle = 0;
   streakDirection = 0; 
+
+  WandUpdate update;
+  update.state = state;
+  update.channel = channel;
+  sendUpdate(update);
 }
 
 void switchToPoised(Motion *motion) {
   Serial.println("POISED");
+  motion->angle_pitch = 0.0;
+  motion->angle_roll = 0.0;
+  motion->angle_yaw = 0.0;
   motion->angle_roll_output = 0.0;
   motion->angle_yaw_output = 0.0;
+  motion->angle_yaw_output = 0.0;
   state = STATE_POISED;
+
+  WandUpdate update;
+  update.state = state;
+  update.channel = channel;
+  sendUpdate(update);
 }
 
 void switchToTriggered() {
   Serial.println("TRIGGERED");
   state = STATE_TRIGGERED;
   lastUpdate = micros64();
+
+  for (int i=0; i<5; i++) {
+    WandUpdate update;
+    update.state = state;
+    update.channel = channel;
+    sendUpdate(update);
+    delay(100);
+  }
 }
 
 void loopTriggered(Motion *motion) {
@@ -139,7 +152,6 @@ void loopPoised(Motion *motion) {
 }
 
 void loopReady(Motion *motion) {
-  float amp = dist(motion->angle_roll_output, motion->angle_yaw_output);
   if (motion->acc_x < -READY_TO_POISED_THRESHOLD) {
     if (streakDirection == -1) {
       if (micros64() - chSelectStreakStart > READY_TO_POISED_DURATION) {
@@ -232,6 +244,8 @@ void loopCollect(Motion *motion) {
     uint8_t translatedTheta = constrain(map((theta+PI)*10000l, 0, 62831, 0, 255), 0, 255);
 
     WandUpdate update;
+    update.state = state;
+    update.channel = channel;
     update.theta = translatedTheta;
     update.amplitude = constrain(map((long) amp, 0, 20, 0, 200), 0, 255);
 

@@ -20,12 +20,6 @@
 
 #define DISRUPTPort 50060
 
-#define STATE_INIT_CHANNEL 0
-#define STATE_COLLECT 1
-#define STATE_READY 2
-#define STATE_POISED 3
-#define STATE_TRIGGERED 4
-
 void setupLights();
 void sendUpdate(WandUpdate update);
 float angle(float x, float y);
